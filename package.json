@@ -1,11 +1,12 @@
 {
-  "name": "temp-app",
+  "name": "cv-app-builder",
+  "description": "CV App Builder with template integrations, pdf generation and more",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.0.1",
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",
-    "build": "tsc -b && npm run build:client && npm run build:server",
+    "build": "tsc -b && pnpm run build:client && pnpm run build:server",
     "build:client": "vite build --outDir dist/client",
     "build:server": "vite build --ssr src/entry-server.tsx --outDir dist/server",
     "lint": "eslint --max-warnings 0",

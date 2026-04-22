@@ -1,20 +1,25 @@
-import NotFoundPage from './pages/NotFoundPage.tsx'
-import EditorPage from './pages/EditorPage.tsx'
-import HomePage from './pages/HomePage.tsx'
-
 import type { RouteObject } from 'react-router'
 
 export const routes: RouteObject[] = [
   {
     path: '/',
-    element: <HomePage />
+    lazy: async () => {
+      const { default: HomePage } = await import('./pages/HomePage.tsx');
+      return { Component: HomePage };
+    }
   },
   {
     path: '/editor',
-    element: <EditorPage />
+    lazy: async () => {
+      const { default: EditorPage } = await import('./pages/EditorPage.tsx');
+      return { Component: EditorPage };
+    }
   },
   {
     path: '*',
-    element: <NotFoundPage />
+    lazy: async () => {
+      const { default: NotFoundPage } = await import('./pages/NotFoundPage.tsx');
+      return { Component: NotFoundPage };
+    }
   }
 ]

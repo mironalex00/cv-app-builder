@@ -21,5 +21,14 @@ export default defineConfig({
         fixTypes: ['layout', 'suggestion', 'problem'],
       }
     })
-  ]
+  ],
+  optimizeDeps: {
+    include: [
+      '@mui/material',
+      '@mui/icons-material',
+      '@emotion/react',
+      '@emotion/styled',
+      '@mui/x-date-pickers'
+    ]
+  }
 })

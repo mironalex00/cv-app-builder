@@ -3,8 +3,8 @@ import { readFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 
 import compression from 'compression';
-import { Application } from 'express';
 import sirv from 'sirv';
+import { Application } from 'express';
 import { createServer, type ViteDevServer } from 'vite';
 
 declare type SSROptions = {
@@ -14,9 +14,11 @@ declare type SSROptions = {
 }
 
 export default function createViteSSRSetup(options: SSROptions) {
+
     const { isProduction, baseRoute, app } = options;
 
     return async () => {
+        
         let vite: ViteDevServer | undefined;
         const root = process.cwd();
 
@@ -39,7 +41,10 @@ export default function createViteSSRSetup(options: SSROptions) {
 
         app.use('*all', async (req, res) => {
             try {
-                const url = req.originalUrl.replace(baseRoute, '');
+                let url = req.originalUrl.replace(baseRoute, '');
+                if (!url.startsWith('/')) {
+                    url = `/${url}`;
+                }
 
                 let template: string;
                 let render: (url: string) => Promise<{ head?: string; html?: string }>;
