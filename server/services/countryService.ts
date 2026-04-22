@@ -1,7 +1,12 @@
+import { Worker } from 'node:worker_threads';
+
 import { DATA_DIR, EntityLookup, ServiceArray } from '../common.js';
 
 import { createEntityLookup } from '../utils/entityLookup.js';
 import DataSourceServiceBuilder, { type DataSourceService } from '../utils/serviceBuilder.js';
+
+import { transformCountryData } from '../shared/location/location.helpers.js';
+import { Country, State, City, Coordinates, RawCountry } from '../shared/location/location.types.js';
 
 // ============================================================================
 // Path & URL Configuration
@@ -12,154 +17,7 @@ const BLOCK_LIST_REPO = 'dr5hn/countries-states-cities-database/refs/heads/maste
 const BLOCK_LIST_FILE = 'countries+states+cities.json';
 const SOURCE_URL = `${GITHUB_SOURCE}/${BLOCK_LIST_REPO}/${BLOCK_LIST_FILE}`;
 
-// ============================================================================
-// Interfaces
-// ============================================================================
-export interface Timezone {
-    zoneName: string;
-    gmtOffset: number;
-    gmtOffsetName: string;
-    abbreviation: string;
-    tzName: string;
-}
 
-export interface Translations {
-    br?: string;
-    ko?: string;
-    'pt-BR'?: string;
-    pt?: string;
-    nl?: string;
-    hr?: string;
-    fa?: string;
-    de?: string;
-    es?: string;
-    fr?: string;
-    ja?: string;
-    it?: string;
-    'zh-CN'?: string;
-    tr?: string;
-    ru?: string;
-    uk?: string;
-    pl?: string;
-    ar?: string;
-    hi?: string;
-    [locale: string]: string | undefined;
-}
-
-interface RawCity {
-    id?: number | string | null;
-    name?: string | null;
-    latitude?: string | number | null;
-    longitude?: string | number | null;
-    timezone?: string | null;
-}
-
-interface RawState {
-    id?: number | string | null;
-    name?: string | null;
-    type?: string | null;
-    native?: string | null;
-    latitude?: string | number | null;
-    longitude?: string | number | null;
-    cities?: RawCity[] | null;
-}
-
-interface RawCountry {
-    id?: number | string | null;
-    name?: string | null;
-    phonecode?: string | number | null;
-    capital?: string | null;
-    currency?: string | null;
-    region?: string | null;
-    subregion?: string | null;
-    population?: string | number | null;
-    latitude?: string | number | null;
-    longitude?: string | number | null;
-    translations?: Record<string, unknown> | null;
-    timezones?: readonly unknown[] | null;
-    states?: RawState[] | null;
-}
-
-interface CountryRef {
-    readonly id: number;
-    readonly name: string;
-}
-
-interface StateRef {
-    readonly id: number;
-    readonly name: string;
-}
-
-// ============================================================================
-// Classes
-// ============================================================================
-export class Coordinates {
-    constructor(
-        public readonly latitude: number | null,
-        public readonly longitude: number | null
-    ) { }
-}
-
-export class City {
-    public readonly searchTerms: readonly string[];
-
-    constructor(
-        public readonly id: number,
-        public readonly name: string,
-        public readonly coords: Coordinates,
-        public readonly timezone: string,
-        public readonly state: StateRef
-    ) {
-        this.searchTerms = Object.freeze([name.toLowerCase()]);
-    }
-}
-
-export class State {
-    public readonly searchTerms: readonly string[];
-
-    constructor(
-        public readonly id: number,
-        public readonly name: string,
-        public readonly coords: Coordinates,
-        public readonly type: string | null,
-        public readonly native: string | null,
-        public readonly country: CountryRef,
-        public readonly cities: readonly City[]
-    ) {
-        const terms: string[] = [name.toLowerCase()];
-        this.searchTerms = Object.freeze(terms);
-    }
-}
-
-export class Country {
-    public readonly searchTerms: readonly string[];
-
-    constructor(
-        public readonly id: number,
-        public readonly name: string,
-        public readonly phoneCode: number,
-        public readonly capital: string | null,
-        public readonly currency: string | null,
-        public readonly region: string | null,
-        public readonly subregion: string | null,
-        public readonly population: number | null,
-        public readonly coords: Coordinates,
-        public readonly timezones: readonly Timezone[],
-        public readonly translations: Translations,
-        public readonly states: readonly State[]
-    ) {
-        const terms: string[] = [name.toLowerCase()];
-        if (translations) {
-            for (const key of Object.keys(translations)) {
-                const value = translations[key];
-                if (!!value && typeof value === 'string' && value.length > 0) {
-                    terms.push(value.toLowerCase());
-                }
-            }
-        }
-        this.searchTerms = Object.freeze(terms);
-    }
-}
 
 // ============================================================================
 // Global Indexes
@@ -206,153 +64,91 @@ function repopulateGlobalMaps(countries: Country[]): void {
     }
 }
 
-function parseNumericField(value: string | number | null | undefined): number | null {
-    if (value == null || value === '') return null;
-    const num = Number(value);
-    return Number.isFinite(num) ? num : null;
-}
-
-function parseCoordinate(value: string | number | null | undefined): number {
-    if (value == null || value === '') return 0;
-    const num = Number(value);
-    return Number.isFinite(num) ? num : 0;
-}
-
-function transformCountryData(rawCountries: RawCountry[]): Country[] {
-
-    countryMap.clear();
-    stateMap.clear();
-    cityMap.clear();
-    allStates.length = 0;
-    allCities.length = 0;
-
+function instantiateCountries(rawCountries: Country[]): Country[] {
     const compactCountries: Country[] = new Array(rawCountries.length);
 
     for (let i = 0; i < rawCountries.length; i++) {
         const raw = rawCountries[i];
 
-        if (!raw || typeof raw !== 'object') continue;
+        const states: State[] = new Array(raw.states.length);
+        const countryRef = { id: raw.id, name: raw.name };
 
-        const countryId = Number(raw.id) || 0;
-        const countryName = String(raw.name ?? '');
-        const phoneCode = parseNumericField(raw.phonecode) ?? 0;
-        const capital = raw.capital ? String(raw.capital) : null;
-        const currency = raw.currency ? String(raw.currency) : null;
-        const region = raw.region ? String(raw.region) : null;
-        const subregion = raw.subregion ? String(raw.subregion) : null;
-        const population = parseNumericField(raw.population);
-        const latitude = parseCoordinate(raw.latitude);
-        const longitude = parseCoordinate(raw.longitude);
-        const translations = raw.translations ? Object.freeze(raw.translations as Translations) : {};
-        const timezones: Timezone[] = Array.isArray(raw.timezones)
-            ? raw.timezones.filter((tz: unknown): tz is Timezone => tz !== null && typeof tz === 'object')
-            : [];
+        for (let j = 0; j < raw.states.length; j++) {
+            const rawState = raw.states[j];
+            const cities: City[] = new Array(rawState.cities.length);
+            const stateRef = { id: rawState.id, name: rawState.name };
 
-        const countryRef: CountryRef = Object.freeze({
-            id: countryId,
-            name: countryName,
-        });
-
-        const rawStates = Array.isArray(raw.states) ? raw.states : [];
-        const states: State[] = new Array(rawStates.length);
-
-        for (let j = 0; j < rawStates.length; j++) {
-            const rawState = rawStates[j];
-            if (!rawState || typeof rawState !== 'object') continue;
-
-            const stateId = Number(rawState.id) || 0;
-            const stateName = String(rawState.name ?? '');
-            const stateType = rawState.type ? String(rawState.type) : null;
-            const stateNative = rawState.native ? String(rawState.native) : null;
-
-            const stateLat = parseNumericField(rawState.latitude);
-            const stateLng = parseNumericField(rawState.longitude);
-
-            const stateRef: StateRef = Object.freeze({
-                id: stateId,
-                name: stateName,
-            });
-
-            const rawCities = Array.isArray(rawState.cities) ? rawState.cities : [];
-            const cities: City[] = new Array(rawCities.length);
-
-            for (let k = 0; k < rawCities.length; k++) {
-                const rawCity = rawCities[k];
-                if (!rawCity || typeof rawCity !== 'object') continue;
-
-                const city = new City(
-                    Number(rawCity.id) || 0,
-                    String(rawCity.name ?? ''),
-                    new Coordinates(
-                        parseCoordinate(rawCity.latitude),
-                        parseCoordinate(rawCity.longitude)
-                    ),
-                    String(rawCity.timezone ?? ''),
+            for (let k = 0; k < rawState.cities.length; k++) {
+                const rawCity = rawState.cities[k];
+                cities[k] = new City(
+                    rawCity.id,
+                    rawCity.name,
+                    new Coordinates(rawCity.coords.latitude, rawCity.coords.longitude),
+                    rawCity.timezone,
                     stateRef
                 );
-
-                cities[k] = city;
-                cityMap.set(String(city.id), city);
-                cityMap.set(city.name.toLowerCase(), city);
-                allCities.push(city);
             }
 
-            const state = new State(
-                stateId,
-                stateName,
-                new Coordinates(stateLat, stateLng),
-                stateType,
-                stateNative,
+            states[j] = new State(
+                rawState.id,
+                rawState.name,
+                new Coordinates(rawState.coords.latitude, rawState.coords.longitude),
+                rawState.type,
+                rawState.native,
                 countryRef,
                 Object.freeze(cities)
             );
-
-            states[j] = state;
-            stateMap.set(String(state.id), state);
-            stateMap.set(state.name.toLowerCase(), state);
-            allStates.push(state);
         }
 
-        const country = new Country(
-            countryId,
-            countryName,
-            phoneCode,
-            capital,
-            currency,
-            region,
-            subregion,
-            population,
-            new Coordinates(latitude, longitude),
-            Object.freeze(timezones),
-            Object.freeze(translations),
+        compactCountries[i] = new Country(
+            raw.id,
+            raw.name,
+            raw.phoneCode,
+            raw.capital,
+            raw.currency,
+            raw.region,
+            raw.subregion,
+            raw.population,
+            new Coordinates(raw.coords.latitude, raw.coords.longitude),
+            Object.freeze(raw.timezones),
+            Object.freeze(raw.translations),
             Object.freeze(states)
         );
-
-        compactCountries[i] = country;
-        countryMap.set(String(country.id), country);
-        countryMap.set(country.name.toLowerCase(), country);
     }
 
     return compactCountries;
 }
 
-function parseCountryList(content: string): Country[] {
+function parseCountryList(content: string | ArrayBuffer): Promise<Country[]> {
+    return new Promise((resolvePromise, rejectPromise) => {
 
-    let parsed: unknown;
-    try {
-        parsed = JSON.parse(content);
-    } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        throw new TypeError(`Invalid JSON: ${message}`, { cause: err });
-    }
+        const worker = new Worker(
+            new URL('../workers/countryWorker.ts', import.meta.url),
+            {
+                workerData: content,
+                execArgv: [...process.execArgv, '--import', 'tsx']
+            }
+        );
 
-    if (!Array.isArray(parsed)) {
-        throw new TypeError('Invalid countries JSON: root must be an array');
-    }
+        worker.on('message', (message) => {
+            if (message && typeof message === 'object' && 'error' in message) {
+                rejectPromise(new Error(message.error));
+                return;
+            }
 
-    const compactCountries = transformCountryData(parsed as RawCountry[]);
-    countriesArray.replace(compactCountries);
-    return compactCountries;
+            const rawCountries = message as Country[];
+            const compactCountries = instantiateCountries(rawCountries);
+
+            countriesArray.replace(compactCountries);
+            repopulateGlobalMaps(compactCountries);
+            resolvePromise(compactCountries);
+        });
+
+        worker.on('error', rejectPromise);
+        worker.on('exit', (code) => {
+            if (code !== 0) rejectPromise(new Error(`Worker stopped with exit code ${code}`));
+        });
+    });
 }
 
 // ============================================================================
@@ -373,8 +169,10 @@ const countryDataSource: DataSourceService<Country, string> = new DataSourceServ
             repopulateGlobalMaps(items);
             return items;
         }
-        const items = transformCountryData(data as RawCountry[]);
+        const plainObjects = transformCountryData(data as RawCountry[]);
+        const items = instantiateCountries(plainObjects);
         countriesArray.replace(items);
+        repopulateGlobalMaps(items);
         return items;
     })
     .withRequestConfig({

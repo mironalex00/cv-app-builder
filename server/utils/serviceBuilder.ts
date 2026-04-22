@@ -22,10 +22,9 @@ export interface DataSourceServiceConfig<T = string, TRaw = string, TSearch = T>
     sourceUrl: string;
     /**
      * Parser function that transforms the raw response text into an array of items.
-     * Must be synchronous and pure to avoid deoptimizations.
+     * Can be asynchronous to avoid event loop blocking.
      */
-    parser: (rawContent: TRaw) => T[];
-    // parser: (rawContent: string) => T[];
+    parser: (rawContent: TRaw) => T[] | Promise<T[]>;
     /** Axios request configuration overrides. */
     requestConfig?: AxiosRequestConfig;
     /** Optional item normalizer (e.g., .toLowerCase()). */
@@ -36,7 +35,7 @@ export interface DataSourceServiceConfig<T = string, TRaw = string, TSearch = T>
     /** Overrides default Set.has() resolution for complex caching. */
     has?: (cache: Set<T>, normalizedSearchItem: TSearch) => boolean;
     /** Custom deserializer to reconstruct cached items from disk JSON. */
-    deserialize?: (parsedJson: unknown) => T[];
+    deserialize?: (parsedJson: unknown) => T[] | Promise<T[]>;
 }
 export interface DataSourceService<T = string, TSearch = T> {
     /** Initializes the service (loads cache, creates directory). */
@@ -112,7 +111,7 @@ class DataSourceServiceImpl<T, TRaw, TSearch = T> implements DataSourceService<T
             );
 
             const rawContent = response.data;
-            const parsedItems = this.config.parser(rawContent);
+            const parsedItems = await this.config.parser(rawContent);
             if (parsedItems.length === 0) {
                 throw new Error('Parser returned empty array');
             }
@@ -161,7 +160,7 @@ class DataSourceServiceImpl<T, TRaw, TSearch = T> implements DataSourceService<T
             const data = await readFile(this.filePath, 'utf-8');
             const parsed: unknown = JSON.parse(data);
 
-            const items = this.config.deserialize(parsed);
+            const items = await this.config.deserialize(parsed);
             if (items.length > 0) {
                 const normalized = items.map((item) => this.config.normalize(item));
                 this.state.cache = new Set(normalized);
@@ -215,7 +214,7 @@ export default class DataSourceServiceBuilder<T = string, TRaw = string, TSearch
         this.config.sourceUrl = url;
         return this;
     }
-    withParser(parser: (raw: TRaw) => T[]): this {
+    withParser(parser: (raw: TRaw) => T[] | Promise<T[]>): this {
         this.config.parser = parser;
         return this;
     }
@@ -235,7 +234,7 @@ export default class DataSourceServiceBuilder<T = string, TRaw = string, TSearch
         this.config.has = hasFn;
         return this;
     }
-    withDeserializer(deserialize: (parsedJson: unknown) => T[]): this {
+    withDeserializer(deserialize: (parsedJson: unknown) => T[] | Promise<T[]>): this {
         this.config.deserialize = deserialize;
         return this;
     }
