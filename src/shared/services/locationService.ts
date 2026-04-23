@@ -1,60 +1,86 @@
 import axios from 'axios';
 
+const API_BASE = '/api';
+
+let cachedCountries: CountryData[] | null = null;
+let cachedStates: StateData[] | null = null;
+
+// ============================================================================
+// Interfaces
+// ============================================================================
 export interface CountryData {
-    code: string; // ISO 2 (cca2)
-    name: string; // common name (English)
-    flag?: string;
-    translations?: Record<string, { common: string; official: string }>;
+    id: number;
+    name: string;
+    phoneCode?: string;
+    searchTerms?: string[];
 }
 
 export interface StateData {
-    id?: number;
+    id: number;
     name: string;
-    isoCode?: string;
     countryCode?: string;
+    stateCode?: string;
+    searchTerms?: string[];
+    country?: Partial<CountryData>;
 }
 
 export interface CityData {
-    id?: number;
+    id: number;
     name: string;
     stateCode?: string;
 }
 
-let cachedCountries: CountryData[] | null = null;
-
+// ============================================================================
+// Fetch services
+// ============================================================================
 export const fetchCountries = async (): Promise<CountryData[]> => {
     if (cachedCountries) return cachedCountries;
 
     try {
-        const response = await axios.get('https://restcountries.com/v3.1/all?fields=name,cca2,flags,translations');
-        cachedCountries = response.data.map((country: { cca2: string; name: { common: string }; flags: { png?: string; svg?: string }; translations: Record<string, { common: string; official: string }> }) => ({
-            code: country.cca2,
-            name: country.name.common,
-            flag: country.flags.png || country.flags.svg,
-            translations: country.translations
-        }));
-        cachedCountries?.sort((a, b) => a.name.localeCompare(b.name));
-        return cachedCountries || [];
+        const response = await axios.get(`${API_BASE}/countries`);
+        const { success, data } = response.data;
+
+        if (success && Array.isArray(data)) {
+            cachedCountries = data.map((country: CountryData) => ({
+                id: country.id,
+                name: country.name,
+                phoneCode: country.phoneCode,
+                searchTerms: country.searchTerms
+            }));
+            cachedCountries.sort((a, b) => a.name.localeCompare(b.name));
+            return cachedCountries || [];
+        }
+        return [];
     } catch {
         return [];
     }
 };
 
-export const fetchStates = async (countryName: string): Promise<StateData[]> => {
+export const fetchStates = async (id: number): Promise<StateData[]> => {
+    if (cachedStates) return cachedStates;
+
     try {
-        const response = await axios.post('https://countriesnow.space/api/v0.1/countries/states', {
-            country: countryName
-        });
-        
-        if (response.data && !response.data.error) {
-            return response.data.data.states.map((state: { name: string; state_code: string }, index: number) => ({
-                id: index,
-                name: state.name,
-                isoCode: state.state_code,
-                countryCode: '' // No lo devuelve directamente este endpoint de la misma forma
-            }));
+        const response = await axios.get(`${API_BASE}/states/${id}`);
+        const { success, data } = response.data;
+
+        if (
+            success !== true ||
+            !data ||
+            typeof data !== 'object' ||
+            !('country' in data) ||
+            !('states' in data) ||
+            !Array.isArray(data.states)
+        ) {
+            return [];
         }
-        return [];
+
+        cachedStates = (data.states as StateData[])
+            .map((state: StateData) => ({
+                ...state,
+                searchTerms: state.searchTerms ?? [state.name.toLowerCase()],
+            }))
+            .sort((a: StateData, b: StateData) => a.name.localeCompare(b.name));
+        return cachedStates || [];
     } catch {
         return [];
     }

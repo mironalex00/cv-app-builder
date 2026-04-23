@@ -37,3 +37,7 @@ dist-ssr
 .vite/
 .eslintcache
 coverage/
+
+# lock files
+pnpm-lock.yaml
+package-lock.json

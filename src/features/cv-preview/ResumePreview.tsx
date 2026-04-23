@@ -1,14 +1,14 @@
 import { forwardRef } from 'react';
+
 import { Box, Paper, Typography, Avatar, Divider, Chip } from '@mui/material';
 
 import type { ResumeData } from '../../shared/types/resume.types';
 
-interface ResumePreviewProps {
+declare interface ResumePreviewProps {
   data: ResumeData;
 }
 
 const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data }, ref) => {
-  // Aseguramos valores por defecto para evitar errores si los arrays no existen
   const { 
     personalInfo, 
     experience = [], 

@@ -28,7 +28,9 @@ export default defineConfig({
       '@mui/icons-material',
       '@emotion/react',
       '@emotion/styled',
-      '@mui/x-date-pickers'
+      '@mui/x-date-pickers',
+      'jspdf',
+      'html2canvas',
     ]
   }
 })

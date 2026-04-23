@@ -1,0 +1,10 @@
+<svg viewBox="0 0 460 100" xmlns="http://www.w3.org/2000/svg" fill="none">
+  <g id="isotipo">
+    <path d="M25 80 L50 20 L75 80" stroke="#F5F7FA" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="48" y="50" width="4" height="14" fill="#00E5FF"/>
+  </g>
+  <g id="wordmark" transform="translate(120,62)">
+    <text x="0" y="0" fill="#F5F7FA" font-family="Inter, Montserrat, sans-serif" font-size="34" font-weight="600" letter-spacing="-0.5">ARM</text>
+    <text x="82" y="0" fill="#9AA4AF" font-family="Inter, Montserrat, sans-serif" font-size="34" font-weight="400" letter-spacing="-0.3">-Software</text>
+  </g>
+</svg>

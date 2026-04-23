@@ -1,41 +1,45 @@
-import { StrictMode } from 'react'
-import ReactDOMServer from 'react-dom/server'
-import {
-  createStaticHandler,
-  createStaticRouter,
-  StaticRouterProvider
-} from 'react-router'
-import { ThemeProvider, createTheme, CssBaseline } from '@mui/material'
-import createCache from '@emotion/cache'
-import { CacheProvider } from '@emotion/react'
-import createEmotionServer from '@emotion/server/create-instance'
-import { routes } from './routes.tsx'
-import App from './App.tsx'
+import { StrictMode } from 'react';
+import ReactDOMServer from 'react-dom/server';
+import { createStaticHandler, createStaticRouter, StaticRouterProvider } from 'react-router';
+
+import createCache from '@emotion/cache';
+import { CacheProvider } from '@emotion/react';
+import createEmotionServer from '@emotion/server/create-instance';
+
+import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
+
+import { routes } from './routes';
+import App from './App';
 
 const theme = createTheme({
-  palette: {
-    primary: { main: '#0A66C2' },
-  },
-})
+  palette: { primary: { main: '#0A66C2' } },
+});
 
-export async function render(url: string) {
-  const cache = createCache({ key: 'css' })
-  const { extractCriticalToChunks, constructStyleTagsFromChunks } = createEmotionServer(cache)
-
-  const fullRoutes = [{
-    element: <App />,
-    children: routes,
-  }]
-
-  const handler = createStaticHandler(fullRoutes)
-  const fetchRequest = new Request(`https://localhost${url}`)
-  const context = await handler.query(fetchRequest)
-
-  if (context instanceof Response) {
-    throw context
+export async function render(url: string): Promise<{ html: string; head: string }> {
+  let pathname: string;
+  try {
+    pathname = new URL(url, 'http://localhost').pathname;
+    if (pathname.includes('..') || /[^a-zA-Z0-9_\-/.~]/.test(pathname)) {
+      throw new Error('Invalid URL path');
+    }
+  } catch {
+    throw new Error('Malformed URL');
   }
 
-  const router = createStaticRouter(handler.dataRoutes, context)
+  const cache = createCache({ key: 'css' });
+  const { extractCriticalToChunks, constructStyleTagsFromChunks } = createEmotionServer(cache);
+
+  const fullRoutes = [{ element: <App />, children: routes }];
+  const handler = createStaticHandler(fullRoutes);
+
+  const fetchRequest = new Request(`http://localhost${pathname}`);
+  const context = await handler.query(fetchRequest);
+
+  if (context instanceof Response) {
+    throw context;
+  }
+
+  const router = createStaticRouter(handler.dataRoutes, context);
 
   const app = (
     <StrictMode>
@@ -46,12 +50,11 @@ export async function render(url: string) {
         </ThemeProvider>
       </CacheProvider>
     </StrictMode>
-  )
+  );
 
-  const html = ReactDOMServer.renderToString(app)
+  const html = ReactDOMServer.renderToString(app);
+  const chunks = extractCriticalToChunks(html);
+  const styles = constructStyleTagsFromChunks(chunks);
 
-  const chunks = extractCriticalToChunks(html)
-  const styles = constructStyleTagsFromChunks(chunks)
-
-  return { html, head: styles }
+  return { html, head: styles };
 }
