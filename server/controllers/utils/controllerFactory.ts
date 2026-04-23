@@ -1,13 +1,21 @@
 import type { Request, Response } from 'express';
-import { getParam, sendSuccess, sendBadRequest, sendNotFound } from '../../common.js';
+
+import {
+    getParamFirst,
+    sendSuccess,
+    sendBadRequest,
+    sendNotFound,
+    type EntityLookup,
+    type ParamNameList,
+} from '../../common.js';
 
 // ============================================================================
-// Private types
+// Types
 // ============================================================================
-type LookupFn<T> = (identifier: string, options?: { exact?: boolean }) => T | undefined;
+export type EntityResponse<T, F extends keyof T> = { name: string } & Record<string, T[F]>;
 
 // ============================================================================
-// Helpers
+// Handlers
 // ============================================================================
 export function createListHandler<T extends { name: string }, F extends keyof T>(getList: () => readonly T[], field: F): (req: Request, res: Response) => void {
     return function listHandler(_req: Request, res: Response): void {
@@ -24,25 +32,53 @@ export function createListHandler<T extends { name: string }, F extends keyof T>
         sendSuccess(res, result);
     };
 }
+
+/**
+ * Creates a request handler that resolves an entity from one or more possible route/query/body parameters.
+ *
+ * @template T Entity type with at least a `name` field.
+ * @template F Entity field to project into the success payload.
+ *
+ * @param lookup - Entity lookup function.
+ * @param field - Entity field to include in the success response.
+ * @param paramNames - One or more parameter names, checked left-to-right.
+ */
 export function createSingleHandler<T extends { name: string }, F extends keyof T>(
-    lookup: LookupFn<T>,
+    lookup: EntityLookup<T>,
     field: F,
-    paramName: string = 'country'
+    paramName: string
+): (req: Request, res: Response) => void;
+export function createSingleHandler<T extends { name: string }, F extends keyof T>(
+    lookup: EntityLookup<T>,
+    field: F,
+    paramNames: ParamNameList
+): (req: Request, res: Response) => void;
+export function createSingleHandler<T extends { name: string }, F extends keyof T>(
+    lookup: EntityLookup<T>,
+    field: F,
+    paramNameOrNames: string | ParamNameList
 ): (req: Request, res: Response) => void {
+    const paramNames: ParamNameList =
+        typeof paramNameOrNames === "string" ? [paramNameOrNames] : paramNameOrNames;
+
     return function singleHandler(req: Request, res: Response): void {
-        const identifier = getParam(req, paramName);
+        const identifier = getParamFirst(req, paramNames);
+
         if (!identifier) {
-            return sendBadRequest(res, `Invalid ${paramName} identifier`);
+            return sendBadRequest(
+                res,
+                `Invalid ${paramNames.length === 1 ? paramNames[0] : "identifier"}`
+            );
         }
 
         const entity = lookup(identifier, { exact: true });
         if (!entity) {
-            return sendNotFound(res, `${paramName} not found`);
+            return sendNotFound(res, `${paramNames[0]} not found`);
         }
 
         sendSuccess(res, {
             name: entity.name,
             [field as string]: entity[field],
-        } as { name: string } & Record<string, T[F]>);
+        } as EntityResponse<T, F>);
     };
 }

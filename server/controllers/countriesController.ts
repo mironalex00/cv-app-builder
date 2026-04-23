@@ -30,19 +30,19 @@ async function getCountriesCount(_req: Request, res: Response): Promise<void> {
 };
 
 const getCountryPopulations = createListHandler(getCountriesList, 'population');
-const getPopulationByCountry = createSingleHandler(getCountry, 'population', 'country');
+const getPopulationByCountry = createSingleHandler(getCountry, 'population', ['country', 'id', 'searchTerms']);
 const getCountryCapitals = createListHandler(getCountriesList, 'capital');
-const getCapitalByCountry = createSingleHandler(getCountry, 'capital', 'country');
+const getCapitalByCountry = createSingleHandler(getCountry, 'capital', ['country', 'id', 'searchTerms']);
 const getCountryCurrencies = createListHandler(getCountriesList, 'currency');
-const getCurrencyByCountry = createSingleHandler(getCountry, 'currency', 'country');
+const getCurrencyByCountry = createSingleHandler(getCountry, 'currency', ['country', 'id', 'searchTerms']);
 const getCountryRegions = createListHandler(getCountriesList, 'region');
-const getRegionByCountry = createSingleHandler(getCountry, 'region', 'country');
+const getRegionByCountry = createSingleHandler(getCountry, 'region', ['country', 'id', 'searchTerms']);
 const getCountrySubregions = createListHandler(getCountriesList, 'subregion');
-const getSubregionByCountry = createSingleHandler(getCountry, 'subregion', 'country');
+const getSubregionByCountry = createSingleHandler(getCountry, 'subregion', ['country', 'id', 'searchTerms']);
 const getCountryPhoneCodes = createListHandler(getCountriesList, 'phoneCode');
-const getPhoneCodeByCountry = createSingleHandler(getCountry, 'phoneCode', 'country');
+const getPhoneCodeByCountry = createSingleHandler(getCountry, 'phoneCode', ['country', 'id', 'searchTerms']);
 const getCountryTimezones = createListHandler(getCountriesList, 'timezones');
-const getTimezonesByCountry = createSingleHandler(getCountry, 'timezones', 'country');
+const getTimezonesByCountry = createSingleHandler(getCountry, 'timezones', ['country', 'id', 'searchTerms']);
 
 export default {
     getCountries,

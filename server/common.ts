@@ -4,8 +4,9 @@ import { cwd } from 'node:process';
 import type { Request, Response } from 'express';
 
 // ============================================================================
-// Interfaces
+// Types
 // ============================================================================
+export type ParamNameList = readonly [string, ...string[]];
 export type EntityLookup<T> = (identifier: string, options?: SearchOptions) => T | undefined;
 
 // ============================================================================
@@ -65,6 +66,28 @@ export function getParam(req: Request, name: string): string | undefined {
         return value.trim();
     }
     return undefined;
+}
+
+export function getParamFirst(req: Request, paramNames: ParamNameList): string | undefined {
+    for (let index = 0; index < paramNames.length; index += 1) {
+        const value = getParam(req, paramNames[index]);
+        if (value) {
+            return value;
+        }
+    }
+    return undefined;
+}
+
+export function getParams(req: Request, paramNames: ParamNameList): string[] {
+    const values = [];
+    for (let index = 0; index < paramNames.length; index += 1) {
+        const value = getParam(req, paramNames[index]);
+        if (value === undefined) {
+            continue;
+        }
+        values.push(value);
+    }
+    return values;
 }
 
 // ============================================================================

@@ -1,4 +1,4 @@
-import type { Country, State, City, Timezone } from '../services/countryService.js';
+import type { Country, State, City, Timezone } from '../shared/location/location.types.js';
 
 export interface CountryDTO {
     readonly id: number;

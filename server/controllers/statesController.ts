@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 
-import { getParam, sendSuccess, sendBadRequest, sendNotFound } from '../common.js';
+import { getParamFirst, sendSuccess, sendBadRequest, sendNotFound } from '../common.js';
 import { createListHandler, createSingleHandler } from './utils/controllerFactory.js'
 
 import { getStatesList, stateCount, getState, getCountry } from '../services/countryService.js';
@@ -17,11 +17,11 @@ async function getStates(_req: Request, res: Response): Promise<void> {
 }
 
 async function getStateByParam(req: Request, res: Response): Promise<void> {
-    const identifier = getParam(req, 'state');
+    const identifier = getParamFirst(req, ['state', 'id']);
     if (!identifier) {
         return sendBadRequest(res, 'Invalid state identifier');
     }
-    const state = getState(identifier, { exact: true });
+    const state = getState(identifier, { exact: true }); // TODO: It retrieves countries not states :(
     if (!state) {
         return sendNotFound(res, 'State not found');
     }
@@ -33,7 +33,7 @@ async function getStateCount(_req: Request, res: Response): Promise<void> {
 }
 
 async function getStatesByCountry(req: Request, res: Response): Promise<void> {
-    const identifier = getParam(req, 'country');
+    const identifier = getParamFirst(req, ['country', 'id']);
     if (!identifier) {
         return sendBadRequest(res, 'Invalid country identifier');
     }
@@ -49,7 +49,7 @@ async function getStatesByCountry(req: Request, res: Response): Promise<void> {
 }
 
 async function getStateCountByCountry(req: Request, res: Response): Promise<void> {
-    const identifier = getParam(req, 'country');
+    const identifier = getParamFirst(req, ['country', 'id']);
     if (!identifier) {
         return sendBadRequest(res, 'Invalid country identifier');
     }
@@ -64,7 +64,7 @@ async function getStateCountByCountry(req: Request, res: Response): Promise<void
 }
 
 async function getCountryByState(req: Request, res: Response): Promise<void> {
-    const identifier = getParam(req, 'state');
+    const identifier = getParamFirst(req, ['state', 'id']);
     if (!identifier) {
         return sendBadRequest(res, 'Invalid state identifier');
     }
@@ -82,9 +82,9 @@ async function getCountryByState(req: Request, res: Response): Promise<void> {
 // Field‑Specific Endpoints (Factory‑Generated)
 // ============================================================================
 export const getStateTypes = createListHandler(getStatesList, 'type');
-export const getStateTypeByParam = createSingleHandler(getState, 'type', 'state');
+export const getStateTypeByParam = createSingleHandler(getState, 'type', ['state', 'id', 'searchTerms']);
 export const getStateNatives = createListHandler(getStatesList, 'native');
-export const getStateNativeByParam = createSingleHandler(getState, 'native', 'state');
+export const getStateNativeByParam = createSingleHandler(getState, 'native', ['state', 'id', 'searchTerms']);
 
 export default {
     getStateByParam,

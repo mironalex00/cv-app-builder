@@ -55,6 +55,7 @@ router.get('/native', statesController.getStateNatives);
  * /states/type/{state}:
  *   get:
  *     summary: Retrieve administrative type for a specific state
+ *     description: Returns the administrative type of a specific state.
  *     tags: [States]
  *     parameters:
  *       - in: path
@@ -62,6 +63,9 @@ router.get('/native', statesController.getStateNatives);
  *         required: true
  *         schema:
  *           type: string
+ *     responses:
+ *       200:
+ *         description: State type value returned.
  */
 router.get('/type/:state', statesController.getStateTypeByParam);
 
@@ -70,6 +74,7 @@ router.get('/type/:state', statesController.getStateTypeByParam);
  * /states/native/{state}:
  *   get:
  *     summary: Retrieve native name for a specific state
+ *     description: Returns the native name of a specific state.
  *     tags: [States]
  *     parameters:
  *       - in: path
@@ -77,6 +82,9 @@ router.get('/type/:state', statesController.getStateTypeByParam);
  *         required: true
  *         schema:
  *           type: string
+ *     responses:
+ *       200:
+ *         description: Native name value returned.
  */
 router.get('/native/:state', statesController.getStateNativeByParam);
 
