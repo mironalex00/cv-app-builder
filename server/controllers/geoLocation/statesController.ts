@@ -1,11 +1,12 @@
 import type { Request, Response } from 'express';
 
-import { getParamFirst, sendSuccess, sendBadRequest, sendNotFound } from '../common.js';
-import { createListHandler, createSingleHandler } from './utils/controllerFactory.js'
+import { sendBadRequest, sendNotFound, sendSuccess } from '../../shared/http/response.js';
 
-import { getStatesList, stateCount, getState, getCountry } from '../services/countryService.js';
+import { createListHandler, createSingleHandler } from '../utils/controllerFactory.js'
+import { getParamFirst } from '../utils/searchHelpers.js';
 
-import { toStateDTO, toStateDTOArray } from '../dto/location.dto.js';
+import { toStateDTO, toStateDTOArray } from '../../dto/location.dto.js';
+import { getStatesList, stateCount, getState, getCountry } from '../../services/geoLocationService.js';
 
 // ============================================================================
 // Private handlers
@@ -81,10 +82,10 @@ async function getCountryByState(req: Request, res: Response): Promise<void> {
 // ============================================================================
 // Field‑Specific Endpoints (Factory‑Generated)
 // ============================================================================
-export const getStateTypes = createListHandler(getStatesList, 'type');
-export const getStateTypeByParam = createSingleHandler(getState, 'type', ['state', 'id', 'searchTerms']);
-export const getStateNatives = createListHandler(getStatesList, 'native');
-export const getStateNativeByParam = createSingleHandler(getState, 'native', ['state', 'id', 'searchTerms']);
+const getStateTypes = createListHandler(getStatesList, 'type');
+const getStateTypeByParam = createSingleHandler(getState, 'type', ['state', 'id', 'searchTerms']);
+const getStateNatives = createListHandler(getStatesList, 'native');
+const getStateNativeByParam = createSingleHandler(getState, 'native', ['state', 'id', 'searchTerms']);
 
 export default {
     getStateByParam,

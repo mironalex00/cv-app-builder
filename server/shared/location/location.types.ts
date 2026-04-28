@@ -45,7 +45,7 @@ export interface Translations {
     [locale: string]: string | undefined;
 }
 
-export interface RawCity {
+declare interface RawCity {
     id?: number | string | null;
     name?: string | null;
     latitude?: string | number | null;
@@ -53,7 +53,7 @@ export interface RawCity {
     timezone?: string | null;
 }
 
-export interface RawState {
+declare interface RawState {
     id?: number | string | null;
     name?: string | null;
     type?: string | null;
@@ -74,8 +74,8 @@ export interface RawCountry {
     population?: string | number | null;
     latitude?: string | number | null;
     longitude?: string | number | null;
-    translations?: Record<string, unknown> | null;
-    timezones?: readonly unknown[] | null;
+    translations?: Record<string, string> | null;
+    timezones?: readonly Timezone[] | null;
     states?: RawState[] | null;
 }
 

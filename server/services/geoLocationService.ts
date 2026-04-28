@@ -17,8 +17,6 @@ const BLOCK_LIST_REPO = 'dr5hn/countries-states-cities-database/refs/heads/maste
 const BLOCK_LIST_FILE = 'countries+states+cities.json';
 const SOURCE_URL = `${GITHUB_SOURCE}/${BLOCK_LIST_REPO}/${BLOCK_LIST_FILE}`;
 
-
-
 // ============================================================================
 // Global Indexes
 // ============================================================================
@@ -32,7 +30,7 @@ const allCities: City[] = [];
 // ============================================================================
 // Parsing Utilities
 // ============================================================================
-function isCountryArray(data: unknown): data is Country[] {
+function isCountryArray<T>(data: T | Country[]): data is Country[] {
     if (!Array.isArray(data) || data.length === 0) return false;
     const first = data[0];
     return first instanceof Country ||
@@ -195,7 +193,6 @@ export const updateCountriesFromSource = countryDataSource.update.bind(countryDa
 export const getCountriesList = (): readonly Country[] => countriesArray;
 export const countryCount = (): number => countriesArray.length;
 export const getCountry: EntityLookup<Country> = createEntityLookup(countryMap, countriesArray);
-
 
 // ============================================================================
 // Public API – States

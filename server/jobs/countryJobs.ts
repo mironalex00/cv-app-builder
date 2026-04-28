@@ -1,5 +1,5 @@
 import CronBuilder, { CronScheduler } from '../utils/cronBuilder.js';
-import { updateCountriesFromSource } from '../services/countryService.js';
+import { updateCountriesFromSource } from '../services/geoLocationService.js';
 
 const JOB_ID = 'country-update';
 const JOB_SCHEDULE = CronBuilder.presets.monthly().withDayOfMonth(1).withHour(0).withMinute(0); // Every 1st day of the month at 00:00

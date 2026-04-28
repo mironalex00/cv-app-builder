@@ -1,6 +1,6 @@
 import type { Country, State, City, Timezone } from '../shared/location/location.types.js';
 
-export interface CountryDTO {
+declare interface CountryDTO {
     readonly id: number;
     readonly name: string;
     readonly phoneCode: number;
@@ -14,7 +14,7 @@ export interface CountryDTO {
     readonly timezones: readonly Timezone[];
     readonly searchTerms: readonly string[];
 }
-export interface StateDTO {
+declare interface StateDTO {
     readonly id: number;
     readonly name: string;
     readonly latitude: number | null;
@@ -27,7 +27,7 @@ export interface StateDTO {
     };
     readonly searchTerms: readonly string[];
 }
-export interface CityDTO {
+declare interface CityDTO {
     readonly id: number;
     readonly name: string;
     readonly latitude: number | null;

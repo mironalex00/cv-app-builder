@@ -1,17 +1,22 @@
 import type { City, Country, RawCountry, State, Translations } from './location.types.ts';
 
-export function parseNumericField(value: string | number | null | undefined): number | null {
+// ----------------------------------------------------------------------------
+// Internas
+// ----------------------------------------------------------------------------
+function parseNumericField(value: string | number | null | undefined): number | null {
     if (value == null || value === '') return null;
     const num = Number(value);
     return Number.isFinite(num) ? num : null;
 }
-
-export function parseCoordinate(value: string | number | null | undefined): number {
+function parseCoordinate(value: string | number | null | undefined): number {
     if (value == null || value === '') return 0;
     const num = Number(value);
     return Number.isFinite(num) ? num : 0;
 }
 
+// ----------------------------------------------------------------------------
+// Exported
+// ----------------------------------------------------------------------------
 export function transformCountryData(rawCountries: RawCountry[]): Country[] {
     const compactCountries: Country[] = new Array(rawCountries.length);
 
