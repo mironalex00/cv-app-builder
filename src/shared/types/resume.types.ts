@@ -1,4 +1,4 @@
-export interface Experience {
+declare interface Experience {
     id: string;
     title: string;
     company: string;
@@ -10,7 +10,7 @@ export interface Experience {
     location?: string;
 }
 
-export interface Education {
+declare interface Education {
     id: string;
     school: string;
     degree: string;
@@ -20,7 +20,7 @@ export interface Education {
     description?: string;
 }
 
-export interface Certification {
+declare interface Certification {
     id: string;
     name: string;
     authority: string;
@@ -29,7 +29,7 @@ export interface Certification {
     url?: string;
 }
 
-export interface Language {
+declare interface Language {
     id: string;
     name: string;
     proficiency: string; // Nativo, Bilingüe, Profesional, etc.

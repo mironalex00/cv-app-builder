@@ -1,6 +1,6 @@
 import { StrictMode } from 'react';
 import ReactDOMServer from 'react-dom/server';
-import { createStaticHandler, createStaticRouter, StaticRouterProvider } from 'react-router';
+import { createStaticHandler, createStaticRouter, StaticRouterProvider, matchRoutes } from 'react-router';
 
 import createCache from '@emotion/cache';
 import { CacheProvider } from '@emotion/react';
@@ -29,7 +29,21 @@ export async function render(url: string): Promise<{ html: string; head: string 
   const cache = createCache({ key: 'css' });
   const { extractCriticalToChunks, constructStyleTagsFromChunks } = createEmotionServer(cache);
 
-  const fullRoutes = [{ element: <App />, children: routes }];
+  const resolvedRoutes = routes.map((r) => ({ ...r }));
+  const matched = matchRoutes(resolvedRoutes, pathname) ?? [];
+  
+  await Promise.all(
+    matched.map(async ({ route }) => {
+      const r = route as { lazy?: () => Promise<Record<string, unknown>> };
+      if (typeof r.lazy === 'function') {
+        const resolved = await r.lazy();
+        Object.assign(route, resolved);
+        delete r.lazy;
+      }
+    })
+  );
+
+  const fullRoutes = [{ element: <App />, children: resolvedRoutes }];
   const handler = createStaticHandler(fullRoutes);
 
   const fetchRequest = new Request(`http://localhost${pathname}`);

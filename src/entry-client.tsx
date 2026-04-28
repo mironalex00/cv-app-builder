@@ -1,6 +1,6 @@
 import { StrictMode } from 'react';
 import { hydrateRoot, createRoot } from 'react-dom/client';
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider, matchRoutes } from 'react-router-dom';
 import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
 import createCache from '@emotion/cache';
 import { CacheProvider } from '@emotion/react';
@@ -12,6 +12,18 @@ const theme = createTheme({
 });
 
 const cache = createCache({ key: 'css' });
+const initialMatches = matchRoutes(routes, window.location.pathname) ?? [];
+
+await Promise.all(
+  initialMatches.map(async ({ route }) => {
+    const r = route as { lazy?: () => Promise<Record<string, unknown>> };
+    if (typeof r.lazy === 'function') {
+      const resolved = await r.lazy();
+      Object.assign(route, resolved);
+      delete r.lazy;
+    }
+  })
+);
 
 const router = createBrowserRouter([
   {

@@ -6,7 +6,7 @@ export const routes: RouteObject[] = [
     lazy: async () => {
       const { default: HomePage } = await import('./pages/HomePage.tsx');
       return { Component: HomePage };
-    }
+    },
   },
   {
     path: '/editor',

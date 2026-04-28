@@ -24,17 +24,13 @@ export interface StateData {
     country?: Partial<CountryData>;
 }
 
-export interface CityData {
-    id: number;
-    name: string;
-    stateCode?: string;
-}
-
 // ============================================================================
 // Fetch services
 // ============================================================================
 export const fetchCountries = async (): Promise<CountryData[]> => {
-    if (cachedCountries) return cachedCountries;
+    if (cachedCountries) {
+        return cachedCountries;
+    }
 
     try {
         const response = await axios.get(`${API_BASE}/countries`);
@@ -57,7 +53,9 @@ export const fetchCountries = async (): Promise<CountryData[]> => {
 };
 
 export const fetchStates = async (id: number): Promise<StateData[]> => {
-    if (cachedStates) return cachedStates;
+    if (cachedStates) {
+        return cachedStates;
+    }
 
     try {
         const response = await axios.get(`${API_BASE}/states/${id}`);

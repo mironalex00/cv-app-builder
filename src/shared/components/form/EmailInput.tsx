@@ -1,17 +1,19 @@
 
 import { memo } from 'react';
-import { TextInput, type InputVariant } from './TextInput';
-import { validateEmail } from '../../utils/emailValidator';
-import { type TextFieldProps } from '@mui/material';
 
-interface EmailInputProps extends Omit<TextFieldProps, 'variant'> {
+import { validateEmail } from '../../services/emailService';
+import TextInput, { type InputVariant } from './TextInput';
+
+import type { TextFieldProps } from '@mui/material';
+
+declare interface EmailInputProps extends Omit<TextFieldProps, 'variant'> {
   name: string;
   label?: string;
   required?: boolean;
   uiVariant?: InputVariant;
 }
 
-export const EmailInput = memo(({ 
+const EmailInput = memo(({ 
   name, 
   label = 'Email', 
   required = true, 
@@ -34,3 +36,5 @@ export const EmailInput = memo(({
 });
 
 EmailInput.displayName = 'EmailInput';
+
+export default EmailInput;

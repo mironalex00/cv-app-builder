@@ -1,7 +1,7 @@
-import { lazy, Suspense, useRef, useState, useCallback, useMemo } from 'react';
+import { useRef, useState, useCallback, useMemo } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
 
-import { Alert, Box, Button, Container, Paper, Stack, Skeleton, Typography } from '@mui/material';
+import { Alert, Box, Button, Container, Paper, Stack, Typography } from '@mui/material';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { Preview } from '@mui/icons-material';
@@ -10,27 +10,14 @@ import PreviewModal from '../cv-preview/PreviewModal';
 
 import { isFormValid, isNonEmptyString, EMAIL_REGEX } from './helpers/validation';
 
+import PersonalInfoSection from './components/PersonalInfoSection';
+import ExperienceSection from './components/ExperienceSection';
+import EducationSection from './components/EducationSection';
+import CertificationsSection from './components/CertificationsSection';
+import LanguagesSection from './components/LanguagesSection';
+import SkillsSection from './components/SkillsSection';
+
 import type { ResumeData } from '../../shared/types/resume.types';
-
-// -----------------------------------------------------------------------------
-// Lazy‑loaded form sections (reduce initial bundle size)
-// -----------------------------------------------------------------------------
-const PersonalInfoSection = lazy(() => import('./components/PersonalInfoSection'));
-const ExperienceSection = lazy(() => import('./components/ExperienceSection'));
-const EducationSection = lazy(() => import('./components/EducationSection'));
-const CertificationsSection = lazy(() => import('./components/CertificationsSection'));
-const LanguagesSection = lazy(() => import('./components/LanguagesSection'));
-const SkillsSection = lazy(() => import('./components/SkillsSection'));
-
-// -----------------------------------------------------------------------------
-// Skeleton fallback mientras se carga cada sección
-// -----------------------------------------------------------------------------
-const SectionSkeleton = () => (
-  <Box sx={{ mt: 3 }}>
-    <Skeleton variant="text" width="40%" height={32} sx={{ mb: 2 }} />
-    <Skeleton variant="rectangular" height={120} sx={{ borderRadius: 2 }} />
-  </Box>
-);
 
 // -----------------------------------------------------------------------------
 // Form default values
@@ -176,26 +163,13 @@ export default function CVEditor() {
                 </Alert>
               )}
 
-              {/* Secciones del formulario cargadas perezosamente */}
               <Stack spacing={4}>
-                <Suspense fallback={<SectionSkeleton />}>
-                  <PersonalInfoSection />
-                </Suspense>
-                <Suspense fallback={<SectionSkeleton />}>
-                  <ExperienceSection />
-                </Suspense>
-                <Suspense fallback={<SectionSkeleton />}>
-                  <EducationSection />
-                </Suspense>
-                <Suspense fallback={<SectionSkeleton />}>
-                  <CertificationsSection />
-                </Suspense>
-                <Suspense fallback={<SectionSkeleton />}>
-                  <LanguagesSection />
-                </Suspense>
-                <Suspense fallback={<SectionSkeleton />}>
-                  <SkillsSection />
-                </Suspense>
+                <PersonalInfoSection />
+                <ExperienceSection />
+                <EducationSection />
+                <CertificationsSection />
+                <LanguagesSection />
+                <SkillsSection />
               </Stack>
             </Paper>
           </Container>

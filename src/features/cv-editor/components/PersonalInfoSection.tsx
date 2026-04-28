@@ -4,10 +4,10 @@ import { Typography, Grid, Box } from '@mui/material';
 
 import { isValidPhoneNumber, type CountryCode } from 'libphonenumber-js';
 
-import { TextInput } from '../../../shared/components/form/TextInput';
-import { EmailInput } from '../../../shared/components/form/EmailInput';
-import { SelectInput } from '../../../shared/components/form/SelectInput';
-import { ProfilePicture } from '../../../shared/components/form/ProfilePicture';
+import TextInput from '../../../shared/components/form/TextInput';
+import EmailInput from '../../../shared/components/form/EmailInput';
+import SelectInput from '../../../shared/components/form/SelectInput';
+import ProfilePicture from '../../../shared/components/form/ProfilePicture';
 
 import { useCountries, useJobTitleSuggestions, useStates } from '../hooks/location.hooks';
 

@@ -51,7 +51,7 @@ const StyledTextField = styled(TextField, {
   },
 }));
 
-export const TextInput = React.memo(({ 
+const TextInput = React.memo(({ 
   name, 
   label, 
   rules, 
@@ -82,3 +82,5 @@ export const TextInput = React.memo(({
 });
 
 TextInput.displayName = 'TextInput';
+
+export default TextInput;

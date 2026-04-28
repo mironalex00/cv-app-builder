@@ -9,16 +9,16 @@ import type { InputVariant } from './TextInput';
 // ============================================================================
 // Types & Interfaces
 // ============================================================================
-export type SelectInputValue<T, FreeSolo extends boolean> = AutocompleteValue<T, false, false, FreeSolo>;
+declare type SelectInputValue<T, FreeSolo extends boolean> = AutocompleteValue<T, false, false, FreeSolo>;
 
-export interface SearchableOption {
+declare interface SearchableOption {
   id?: string | number;
   name?: string;
   title?: string;
   searchTerms?: string[];
 }
 
-export interface SelectInputProps<
+declare interface SelectInputProps<
   T,
   FreeSolo extends boolean = false
 > extends Omit<
@@ -61,7 +61,7 @@ function defaultFilterOptions<T>(
   });
 }
 
-export function SelectInput<T, FreeSolo extends boolean = false>({
+export default function SelectInput<T, FreeSolo extends boolean = false>({
   name,
   label,
   required = false,
