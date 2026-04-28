@@ -1,18 +1,13 @@
 import { Router } from 'express'
+import domainsController from '../../controllers/geoLocation/domainsController.js';
 
-import { validateEmail } from '../../controllers/domainsController.js';
-
-const router = Router();
-
-// ============================================================================
-// Domains
-// ============================================================================
 /**
  * @openapi
  * tags:
  *   name: Domains
  *   description: API for managing and validating domain-related data, specifically focused on email address validation against known MX records and formatting standards.
  */
+const router = Router();
 
 /**
  * @openapi
@@ -52,6 +47,6 @@ const router = Router();
  *       400:
  *         description: Malformed request payload or missing email field.
  */
-router.post('/email', validateEmail)
+router.post('/email', domainsController.validateEmail)
 
 export default router;

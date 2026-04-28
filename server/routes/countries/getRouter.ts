@@ -1,47 +1,203 @@
 import { Router } from 'express'
-import countriesController from '../../controllers/countriesController.js';
 
-const router = Router();
+import countriesController from '../../controllers/geoLocation/countriesController.js';
 
 /**
  * @openapi
  * tags:
  *   name: Countries
  *   description: API for retrieving global country data including capitals, currencies, populations, and timezones.
- */
+ * components:
+ *   schemas:
+ *     Timezone:
+ *       type: object
+ *       required: [zoneName, gmtOffset, gmtOffsetName, abbreviation, tzName]
+ *       properties:
+ *         zoneName:
+ *           type: string
+ *           example: Europe/Madrid
+ *         gmtOffset:
+ *           type: integer
+ *           example: 3600
+ *         gmtOffsetName:
+ *           type: string
+ *           example: UTC+01:00
+ *         abbreviation:
+ *           type: string
+ *           example: CET
+ *         tzName:
+ *           type: string
+ *           example: Central European Time
+ *
+ *     Country:
+ *       type: object
+ *       required: [id, name, phoneCode, searchTerms, timezones]
+ *       properties:
+ *         id:
+ *           type: integer
+ *           example: 207
+ *         name:
+ *           type: string
+ *           example: Spain
+ *         phoneCode:
+ *           type: integer
+ *           example: 34
+ *         capital:
+ *           type: string
+ *           nullable: true
+ *           example: Madrid
+ *         currency:
+ *           type: string
+ *           nullable: true
+ *           example: EUR
+ *         region:
+ *           type: string
+ *           nullable: true
+ *           example: Europe
+ *         subregion:
+ *           type: string
+ *           nullable: true
+ *           example: Southern Europe
+ *         population:
+ *           type: integer
+ *           nullable: true
+ *           example: 46754778
+ *         latitude:
+ *           type: number
+ *           nullable: true
+ *           example: 40.0
+ *         longitude:
+ *           type: number
+ *           nullable: true
+ *           example: -4.0
+ *         timezones:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/Timezone'
+ *         searchTerms:
+ *           type: array
+ *           items:
+ *             type: string
+ *           example: [spain, españa, es, esp]
+ *
+ *     CountryFieldProjection:
+ *       type: object
+ *       description: Minimal projection — country name paired with a single requested field.
+ *       required: [name]
+ *       properties:
+ *         name:
+ *           type: string
+ *           example: Spain
+ *
+ *     HttpEnvelope:
+ *       type: object
+ *       required: [statusCode, message, data]
+ *       properties:
+ *         statusCode:
+ *           type: integer
+ *           example: 200
+ *         message:
+ *           type: string
+ *           example: ok
+ *         data:
+ *           description: Response payload — shape depends on the endpoint.
+ *
+ *   parameters:
+ *     CountryParam:
+ *       in: path
+ *       name: country
+ *       required: true
+ *       schema:
+ *         type: string
+ *       description: Country identifier — name, search term, or numeric ID.
+ *       example: spain
+ *
+ *   responses:
+ *     BadRequest:
+ *       description: Invalid or missing identifier.
+ *       content:
+ *         application/json:
+ *           schema:
+ *             allOf:
+ *               - $ref: '#/components/schemas/HttpEnvelope'
+ *               - type: object
+ *                 properties:
+ *                   data:
+ *                     type: object
+ *                     properties:
+ *                       error:
+ *                         type: string
+ *                         example: Invalid country
+ *     NotFound:
+ *       description: Country not found.
+ *       content:
+ *         application/json:
+ *           schema:
+ *             allOf:
+ *               - $ref: '#/components/schemas/HttpEnvelope'
+ *               - type: object
+ *                 properties:
+ *                   data:
+ *                     type: object
+ *                     properties:
+ *                       error:
+ *                         type: string
+ *                         example: country not found
+*/
+const router = Router();
 
 /**
  * @openapi
  * /countries/count:
  *   get:
- *     summary: Retrieve total number of countries
- *     description: Returns the absolute count of country records currently indexed in the systems master data store.
+ *     summary: Total number of countries
  *     tags: [Countries]
  *     responses:
  *       200:
- *         description: Success count returned.
+ *         description: Count returned.
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 count:
- *                   type: integer
- *                   description: Total number of countries.
- *                   example: 250
- */
+ *               allOf:
+ *                 - $ref: '#/components/schemas/HttpEnvelope'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         count:
+ *                           type: integer
+ *                           example: 250
+*/
 router.get('/count', countriesController.getCountriesCount);
 
 /**
  * @openapi
  * /countries/population:
  *   get:
- *     summary: Retrieve populations of all countries
- *     description: Returns a mapping of all countries to their most recent recorded population figures.
+ *     summary: Population of all countries
  *     tags: [Countries]
  *     responses:
  *       200:
- *         description: List of country populations returned.
+ *         description: List returned.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/HttpEnvelope'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: array
+ *                       items:
+ *                         allOf:
+ *                           - $ref: '#/components/schemas/CountryFieldProjection'
+ *                           - type: object
+ *                             properties:
+ *                               population:
+ *                                 type: integer
+ *                                 nullable: true
+ *                                 example: 46754778
  */
 router.get('/population', countriesController.getCountryPopulations);
 
@@ -49,258 +205,454 @@ router.get('/population', countriesController.getCountryPopulations);
  * @openapi
  * /countries/population/{country}:
  *   get:
- *     summary: Retrieve population for a specific country
- *     description: Returns the population for a given country identifier.
+ *     summary: Population for a specific country
  *     tags: [Countries]
  *     parameters:
- *       - in: path
- *         name: country
- *         required: true
- *         schema:
- *           type: string
+ *       - $ref: '#/components/parameters/CountryParam'
  *     responses:
  *       200:
- *         description: Population value returned.
- */
+ *         description: Population returned.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/HttpEnvelope'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       allOf:
+ *                         - $ref: '#/components/schemas/CountryFieldProjection'
+ *                         - type: object
+ *                           properties:
+ *                             population:
+ *                               type: integer
+ *                               nullable: true
+ *                               example: 46754778
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+*/
 router.get('/population/:country', countriesController.getPopulationByCountry);
 
 /**
  * @openapi
  * /countries/capital:
  *   get:
- *     summary: Retrieve capital cities of all countries
- *     description: Returns a mapping of countries to their respective capital cities.
+ *     summary: Capital cities of all countries
  *     tags: [Countries]
  *     responses:
  *       200:
- *         description: List of country capitals returned.
- */
+ *         description: List returned.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/HttpEnvelope'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: array
+ *                       items:
+ *                         allOf:
+ *                           - $ref: '#/components/schemas/CountryFieldProjection'
+ *                           - type: object
+ *                             properties:
+ *                               capital:
+ *                                 type: string
+ *                                 nullable: true
+ *                                 example: Madrid
+*/
 router.get('/capital', countriesController.getCountryCapitals);
 
 /**
  * @openapi
  * /countries/capital/{country}:
  *   get:
- *     summary: Retrieve capital for a specific country
- *     description: Returns the capital city for a given country identifier.
+ *     summary: Capital for a specific country
  *     tags: [Countries]
  *     parameters:
- *       - in: path
- *         name: country
- *         required: true
- *         schema:
- *           type: string
+ *       - $ref: '#/components/parameters/CountryParam'
  *     responses:
  *       200:
- *         description: Capital city returned.
- */
+ *         description: Capital returned.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/HttpEnvelope'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       allOf:
+ *                         - $ref: '#/components/schemas/CountryFieldProjection'
+ *                         - type: object
+ *                           properties:
+ *                             capital:
+ *                               type: string
+ *                               nullable: true
+ *                               example: Madrid
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+*/
 router.get('/capital/:country', countriesController.getCapitalByCountry);
 
 /**
  * @openapi
  * /countries/currency:
  *   get:
- *     summary: Retrieve currencies of all countries
- *     description: Returns a mapping of countries to their primary official currencies.
+ *     summary: Currencies of all countries
  *     tags: [Countries]
  *     responses:
  *       200:
- *         description: List of country currencies returned.
- */
+ *         description: List returned.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/HttpEnvelope'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: array
+ *                       items:
+ *                         allOf:
+ *                           - $ref: '#/components/schemas/CountryFieldProjection'
+ *                           - type: object
+ *                             properties:
+ *                               currency:
+ *                                 type: string
+ *                                 nullable: true
+ *                                 example: EUR
+*/
 router.get('/currency', countriesController.getCountryCurrencies);
 
 /**
  * @openapi
  * /countries/currency/{country}:
  *   get:
- *     summary: Retrieve currency for a specific country
- *     description: Returns the primary currency for a given country identifier.
+ *     summary: Currency for a specific country
  *     tags: [Countries]
  *     parameters:
- *       - in: path
- *         name: country
- *         required: true
- *         schema:
- *           type: string
+ *       - $ref: '#/components/parameters/CountryParam'
  *     responses:
  *       200:
- *         description: Currency information returned.
- */
+ *         description: Currency returned.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/HttpEnvelope'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       allOf:
+ *                         - $ref: '#/components/schemas/CountryFieldProjection'
+ *                         - type: object
+ *                           properties:
+ *                             currency:
+ *                               type: string
+ *                               nullable: true
+ *                               example: EUR
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+*/
 router.get('/currency/:country', countriesController.getCurrencyByCountry);
 
 /**
  * @openapi
  * /countries/region:
  *   get:
- *     summary: Retrieve regions of all countries
- *     description: Returns a breakdown of countries categorized by their major world regions (e.g., Europe, Africa).
+ *     summary: Regions of all countries
  *     tags: [Countries]
  *     responses:
  *       200:
- *         description: List of country regions returned.
- */
+ *         description: List returned.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/HttpEnvelope'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: array
+ *                       items:
+ *                         allOf:
+ *                           - $ref: '#/components/schemas/CountryFieldProjection'
+ *                           - type: object
+ *                             properties:
+ *                               region:
+ *                                 type: string
+ *                                 nullable: true
+ *                                 example: Europe
+*/
 router.get('/region', countriesController.getCountryRegions);
 
 /**
  * @openapi
  * /countries/region/{country}:
  *   get:
- *     summary: Retrieve region for a specific country
- *     description: Returns the world region belonging to a specific country identifier.
+ *     summary: Region for a specific country
  *     tags: [Countries]
  *     parameters:
- *       - in: path
- *         name: country
- *         required: true
- *         schema:
- *           type: string
+ *       - $ref: '#/components/parameters/CountryParam'
  *     responses:
  *       200:
- *         description: Region name returned.
- */
+ *         description: Region returned.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/HttpEnvelope'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       allOf:
+ *                         - $ref: '#/components/schemas/CountryFieldProjection'
+ *                         - type: object
+ *                           properties:
+ *                             region:
+ *                               type: string
+ *                               nullable: true
+ *                               example: Europe
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+*/
 router.get('/region/:country', countriesController.getRegionByCountry);
 
 /**
  * @openapi
  * /countries/subregion:
  *   get:
- *     summary: Retrieve subregions of all countries
- *     description: Returns a breakdown of countries categorized by their specific world subregions (e.g., Southern Europe).
+ *     summary: Subregions of all countries
  *     tags: [Countries]
  *     responses:
  *       200:
- *         description: List of country subregions returned.
- */
+ *         description: List returned.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/HttpEnvelope'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: array
+ *                       items:
+ *                         allOf:
+ *                           - $ref: '#/components/schemas/CountryFieldProjection'
+ *                           - type: object
+ *                             properties:
+ *                               subregion:
+ *                                 type: string
+ *                                 nullable: true
+ *                                 example: Southern Europe
+*/
 router.get('/subregion', countriesController.getCountrySubregions);
 
 /**
  * @openapi
  * /countries/subregion/{country}:
  *   get:
- *     summary: Retrieve subregion for a specific country
- *     description: Returns the world subregion belonging to a specific country identifier.
+ *     summary: Subregion for a specific country
  *     tags: [Countries]
  *     parameters:
- *       - in: path
- *         name: country
- *         required: true
- *         schema:
- *           type: string
+ *       - $ref: '#/components/parameters/CountryParam'
  *     responses:
  *       200:
- *         description: Subregion name returned.
- */
+ *         description: Subregion returned.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/HttpEnvelope'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       allOf:
+ *                         - $ref: '#/components/schemas/CountryFieldProjection'
+ *                         - type: object
+ *                           properties:
+ *                             subregion:
+ *                               type: string
+ *                               nullable: true
+ *                               example: Southern Europe
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+*/
 router.get('/subregion/:country', countriesController.getSubregionByCountry);
 
 /**
  * @openapi
  * /countries/phonecode:
  *   get:
- *     summary: Retrieve international phone codes for all countries
- *     description: Returns a mapping of countries to their official international calling codes.
+ *     summary: International phone codes for all countries
  *     tags: [Countries]
  *     responses:
  *       200:
- *         description: List of country phone codes returned.
- */
+ *         description: List returned.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/HttpEnvelope'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: array
+ *                       items:
+ *                         allOf:
+ *                           - $ref: '#/components/schemas/CountryFieldProjection'
+ *                           - type: object
+ *                             properties:
+ *                               phoneCode:
+ *                                 type: integer
+ *                                 example: 34
+*/
 router.get('/phonecode', countriesController.getCountryPhoneCodes);
 
 /**
  * @openapi
  * /countries/phonecode/{country}:
  *   get:
- *     summary: Retrieve phone code for a specific country
- *     description: Returns the international calling code for a specific country identifier.
+ *     summary: Phone code for a specific country
  *     tags: [Countries]
  *     parameters:
- *       - in: path
- *         name: country
- *         required: true
- *         schema:
- *           type: string
+ *       - $ref: '#/components/parameters/CountryParam'
  *     responses:
  *       200:
  *         description: Phone code returned.
- */
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/HttpEnvelope'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       allOf:
+ *                         - $ref: '#/components/schemas/CountryFieldProjection'
+ *                         - type: object
+ *                           properties:
+ *                             phoneCode:
+ *                               type: integer
+ *                               example: 34
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+*/
 router.get('/phonecode/:country', countriesController.getPhoneCodeByCountry);
 
 /**
  * @openapi
  * /countries/timezones:
  *   get:
- *     summary: Retrieve timezones for all countries
- *     description: Returns a mapping of countries to their associated timezones.
+ *     summary: Timezones for all countries
  *     tags: [Countries]
  *     responses:
  *       200:
- *         description: List of country timezones returned.
- */
+ *         description: List returned.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/HttpEnvelope'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Country'
+*/
 router.get('/timezones', countriesController.getCountryTimezones);
 
 /**
  * @openapi
  * /countries/timezones/{country}:
  *   get:
- *     summary: Retrieve timezones for a specific country
- *     description: Returns a collection of timezones utilized by a specific country identifier.
+ *     summary: Timezones for a specific country
  *     tags: [Countries]
  *     parameters:
- *       - in: path
- *         name: country
- *         required: true
- *         schema:
- *           type: string
+ *       - $ref: '#/components/parameters/CountryParam'
  *     responses:
  *       200:
  *         description: Timezones returned.
- */
-router.get('/timezones/:country', countriesController.getTimezonesByCountry);
-
-/**
- * @openapi
- * /countries:
- *   get:
- *     summary: Get a complete list of all countries
- *     description: Returns a full collection of all countries in the system. Each entry includes geographic coordinates, capital city, currency, and regional metadata.
- *     tags: [Countries]
- *     responses:
- *       200:
- *         description: A complete array of Country objects.
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Country'
- */
-router.get('/', countriesController.getCountries);
+ *               allOf:
+ *                 - $ref: '#/components/schemas/HttpEnvelope'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/Country'
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+*/
+router.get('/timezones/:country', countriesController.getTimezonesByCountry);
 
 /**
  * @openapi
  * /countries/{country}:
  *   get:
- *     summary: Retrieve single country by identifier (ID, Name, or ISO Code)
- *     description: Highly flexible endpoint that resolves a country record by its numeric ID, standard common name, or ISO code (Alpha-2/Alpha-3).
+ *     summary: Single country by identifier
+ *     description: Resolves a country by numeric ID, canonical name, or any configured search term (e.g. "españa" → Spain).
  *     tags: [Countries]
  *     parameters:
- *       - in: path
- *         name: country
- *         required: true
- *         schema:
- *           type: string
- *         description: The numeric ID, Full Name, or ISO code of the country.
+ *       - $ref: '#/components/parameters/CountryParam'
  *     responses:
  *       200:
- *         description: Successfully retrieved country data.
+ *         description: Country returned.
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Country'
+ *               allOf:
+ *                 - $ref: '#/components/schemas/HttpEnvelope'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/Country'
  *       400:
- *         description: Invalid identifier provided.
+ *         $ref: '#/components/responses/BadRequest'
  *       404:
- *         description: Country not found or unrecognized identifier.
+ *         $ref: '#/components/responses/NotFound'
  */
 router.get('/:country', countriesController.getCountryByParam);
+
+/**
+ * @openapi
+ * /countries:
+ *   get:
+ *     summary: Complete list of all countries
+ *     description: Returns all countries with full metadata — coordinates, capital, currency, timezones, and regional classification.
+ *     tags: [Countries]
+ *     responses:
+ *       200:
+ *         description: Full country array returned.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/HttpEnvelope'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Country'
+*/
+router.get('/', countriesController.getCountries);
 
 export default router;

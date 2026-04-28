@@ -1,7 +1,5 @@
-import { Router } from 'express'
-import statesController from '../../controllers/statesController.js';
-
-const router = Router();
+import { Router } from 'express';
+import statesController from '../../controllers/geoLocation/statesController.js';
 
 /**
  * @openapi
@@ -9,6 +7,7 @@ const router = Router();
  *   name: States
  *   description: API for retrieving administrative subdivisions (states, provinces, regions) of countries globally.
  */
+const router = Router();
 
 /**
  * @openapi
@@ -147,7 +146,7 @@ router.get('/:country', statesController.getStatesByCountry);
 
 /**
  * @openapi
- * /states/{state}:
+ * /states/{state}/about:
  *   get:
  *     summary: Retrieve specific state data by identifier
  *     description: Returns full details for a single state record.
@@ -162,7 +161,7 @@ router.get('/:country', statesController.getStatesByCountry);
  *       200:
  *         description: Success
  */
-router.get('/:state', statesController.getStateByParam);
+router.get('/:state/about', statesController.getStateByParam);
 
 /**
  * @openapi
