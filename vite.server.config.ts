@@ -7,18 +7,26 @@ export default mergeConfig(
         build: {
             outDir: 'dist/server',
             ssr: true,
-            rollupOptions: {
+            sourcemap: false,
+            rolldownOptions: {
                 input: 'src/entry-server.tsx',
                 output: {
-                    format: 'esm', // or 'cjs' depending on Node version
+                    format: 'esm',
                     entryFileNames: 'entry-server.js',
                 },
             },
-            // Do not split chunks for server
-            minify: false, // Keep readable for debugging
         },
         ssr: {
-            noExternal: ['@mui/*', '@emotion/*'],
+            target: 'node',
+            noExternal: [
+                '@mui/material',
+                '@mui/icons-material',
+                '@mui/system',
+                '@mui/base',
+                '@emotion/react',
+                '@emotion/styled',
+                '@emotion/server',
+            ],
         },
     })
 );

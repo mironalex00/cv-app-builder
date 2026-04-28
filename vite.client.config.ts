@@ -1,37 +1,76 @@
-import { defineConfig, mergeConfig, type Plugin } from 'vite';
+import { defineConfig, mergeConfig } from 'vite';
 import baseConfig from './vite.config';
-import { visualizer } from 'rollup-plugin-visualizer';
 
 export default mergeConfig(
     baseConfig,
     defineConfig({
-        plugins: [visualizer({ filename: './dist/client/stats.html', gzipSize: true }) as Plugin],
+        plugins: [
+        ],
         build: {
             outDir: 'dist/client',
-            sourcemap: true, 
-            minify: 'esbuild',
-            chunkSizeWarningLimit: 300,
-            rollupOptions: {
-                output: {
-                    manualChunks: (id) => {
-                        if (id.includes('jspdf')) return 'vendor-jspdf';
-                        if (id.includes('html2canvas')) return 'vendor-html2canvas';
-                        if (id.includes('@mui/x-date-pickers')) return 'vendor-mui-x-date-pickers';
-                        if (id.includes('@mui/material') || id.includes('@emotion')) return 'vendor-mui';
-                        if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) return 'vendor-react';
-                        if (id.includes('node_modules')) return 'vendor-common';
-                    },
-                    chunkFileNames: 'assets/[name]-[hash].js',
-                    entryFileNames: 'assets/[name]-[hash].js',
-                    assetFileNames: 'assets/[name]-[hash].[ext]',
-                },
-            },
+            sourcemap: false,
+            cssCodeSplit: true,
+            chunkSizeWarningLimit: 650,
+            minify: true,
             rolldownOptions: {
                 output: {
-                    codeSplitting: true,
+                    minify: {
+                        compress: {
+                            dropConsole: true,
+                            dropDebugger: true,
+                        },
+                    },
+                    codeSplitting: {
+                        groups: [
+                            {
+                                name: 'pdf-tools',
+                                test: /node_modules\/(jspdf|html2canvas|dompurify)/,
+                            },
+                            {
+                                name: 'date-pickers',
+                                test: /node_modules\/@mui\/x-date-pickers/,
+                            },
+                            {
+                                name: 'dayjs',
+                                test: /node_modules\/dayjs/,
+                            },
+                            {
+                                name: 'phone',
+                                test: /node_modules\/libphonenumber-js/,
+                            },
+                            {
+                                name: 'forms',
+                                test: /node_modules\/(react-hook-form|validator)/,
+                            },
+                            {
+                                name: 'http',
+                                test: /node_modules\/axios/,
+                            },
+                            {
+                                name: 'crop-tool',
+                                test: /node_modules\/react-easy-crop/,
+                            },
+                            {
+                                name: 'mui-icons',
+                                test: /node_modules\/@mui\/icons-material/,
+                            },
+                            {
+                                name: 'mui-core',
+                                test: /node_modules\/@mui\/(material|system|base)/,
+                            },
+                            {
+                                name: 'emotion',
+                                test: /node_modules\/@emotion/,
+                            },
+                            {
+                                name: 'react-vendor',
+                                test: /node_modules\/(react|react-dom|react-router|scheduler)\//,
+                            },
+                        ],
+                    },
                     advancedChunks: {
                         minSize: 20_000,
-                        maxSize: 200_000,
+                        maxSize: 250_000,
                     },
                 },
             },

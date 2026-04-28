@@ -15,7 +15,8 @@ export default tseslint.config([
     ]),
     {
         files: [
-            "**/*.{ts,tsx}"
+            "src/**/*.{ts,tsx}",
+            "server/**/*.{ts,tsx}"
         ],
         extends: [
             js.configs.recommended,

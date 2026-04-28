@@ -1,13 +1,27 @@
 import { join } from 'node:path';
 import { cwd } from 'node:process';
 
-import type { Request, Response } from 'express';
-
 // ============================================================================
 // Types
 // ============================================================================
-export type ParamNameList = readonly [string, ...string[]];
+declare type BasicData = string | number | boolean;
+declare type ExtendedData<DataType = BasicData> = DataType | BasicData;
+declare type NullableExtendedData<T = BasicData> = ExtendedData<T> | null;
+
 export type EntityLookup<T> = (identifier: string, options?: SearchOptions) => T | undefined;
+export type ParamNameList = readonly [string, ...string[]];
+
+export type JsonPayload = JsonObject | JsonArray;
+export type JsonValue = NullableExtendedData<BasicData | JsonPayload>;
+
+export type JsonObject = {
+    readonly [key: string]: JsonValue
+};
+
+export type JsonArray = {
+    readonly [index: number]: JsonValue,
+    readonly length: number
+};
 
 // ============================================================================
 // Interfaces
@@ -28,66 +42,9 @@ export interface ReplaceableArray<T> extends Array<T> {
 export interface SearchOptions {
     exact?: boolean;
 }
+
 export interface SearchableEntity {
     readonly searchTerms: readonly string[];
-}
-
-// ============================================================================
-// Func
-// ============================================================================
-export function sendSuccess<T>(res: Response, data: T, statusCode: number = 200): void {
-    const response: ApiResponse<T> = { success: true, data };
-    res.status(statusCode).json(response);
-}
-
-export function sendBadRequest(res: Response, message: string): void {
-    res.status(400).json({ success: false, error: message });
-}
-
-export function sendUnauthorized(res: Response, message: string): void {
-    res.status(401).json({ success: false, error: message });
-}
-
-export function sendForbidden(res: Response, message: string): void {
-    res.status(403).json({ success: false, error: message });
-}
-
-export function sendNotFound(res: Response, message: string): void {
-    res.status(404).json({ success: false, error: message });
-}
-
-export function sendError(res: Response, message: string): void {
-    res.status(500).json({ success: false, error: message });
-}
-
-export function getParam(req: Request, name: string): string | undefined {
-    const value = req.params[name];
-    if (typeof value === 'string' && value.trim().length > 0) {
-        return value.trim();
-    }
-    return undefined;
-}
-
-export function getParamFirst(req: Request, paramNames: ParamNameList): string | undefined {
-    for (let index = 0; index < paramNames.length; index += 1) {
-        const value = getParam(req, paramNames[index]);
-        if (value) {
-            return value;
-        }
-    }
-    return undefined;
-}
-
-export function getParams(req: Request, paramNames: ParamNameList): string[] {
-    const values = [];
-    for (let index = 0; index < paramNames.length; index += 1) {
-        const value = getParam(req, paramNames[index]);
-        if (value === undefined) {
-            continue;
-        }
-        values.push(value);
-    }
-    return values;
 }
 
 // ============================================================================

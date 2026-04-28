@@ -1,29 +1,33 @@
-import { EntityLookup, SearchableEntity, SearchOptions } from "../common";
+import { EntityLookup, SearchableEntity, SearchOptions } from '../common.js';
 
 export function createEntityLookup<T extends SearchableEntity>(
     map: Map<string, T>,
-    array: readonly T[]
+    array: readonly T[],
 ): EntityLookup<T> {
     return function lookup(identifier: string, options: SearchOptions = {}): T | undefined {
-        if (!identifier || typeof identifier !== 'string') {
-            return undefined;
-        }
+        if (!identifier || typeof identifier !== 'string') return undefined;
 
         const { exact = true } = options;
         const lowerId = identifier.toLowerCase();
 
         if (exact) {
-            return map.get(identifier) ?? map.get(lowerId);
+            const fromMap = map.get(identifier) ?? map.get(lowerId);
+            if (fromMap) return fromMap;
+
+            for (let i = 0; i < array.length; i++) {
+                const terms = array[i].searchTerms;
+                for (let j = 0; j < terms.length; j++) {
+                    if (terms[j].toLowerCase() === lowerId) return array[i];
+                }
+            }
+
+            return undefined;
         }
 
         for (let i = 0; i < array.length; i++) {
-            const entity = array[i];
-            const terms = entity.searchTerms;
-            const termsLen = terms.length;
-            for (let j = 0; j < termsLen; j++) {
-                if (terms[j].includes(lowerId)) {
-                    return entity;
-                }
+            const terms = array[i].searchTerms;
+            for (let j = 0; j < terms.length; j++) {
+                if (terms[j].toLowerCase().includes(lowerId)) return array[i];
             }
         }
 

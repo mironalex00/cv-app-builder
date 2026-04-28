@@ -15,17 +15,17 @@ type EnumerateRange<
   ? Acc[number] | Start
   : EnumerateRange<Start, End, [...Acc, Acc['length']]>;
 
-export type Minute = EnumerateRange<0, 60>;        // 0‑59
-export type Hour = EnumerateRange<0, 24>;          // 0‑23
-export type DayOfMonth = EnumerateRange<1, 32>;    // 1‑31
-export type Month = EnumerateRange<1, 13>;         // 1‑12
-export type DayOfWeek = 0 | 1 | 2 | 3 | 4 | 5 | 6; // 0 = Sunday
+declare type Minute = EnumerateRange<0, 60>;        // 0‑59
+declare type Hour = EnumerateRange<0, 24>;          // 0‑23
+declare type DayOfMonth = EnumerateRange<1, 32>;    // 1‑31
+declare type Month = EnumerateRange<1, 13>;         // 1‑12
+declare type DayOfWeek = 0 | 1 | 2 | 3 | 4 | 5 | 6; // 0 = Sunday
 
 /**
  * Cron field value: specific number, wildcard, or step pattern.
  * TypeScript discriminates union for compile‑time validation.
  */
-export type CronField<T extends number> = T | '*' | `*/${number}` | `${number}`;
+declare type CronField<T extends number> = T | '*' | `*/${number}` | `${number}`;
 
 export interface CronExpression {
   readonly minute: CronField<Minute>;
@@ -38,7 +38,7 @@ export interface CronExpression {
 /**
  * Job definition compatible with node-cron ScheduledTask.
  */
-export interface ScheduledJob {
+declare interface ScheduledJob {
   readonly id: string;
   readonly cron: CronExpression;
   readonly handler: () => void | Promise<void>;

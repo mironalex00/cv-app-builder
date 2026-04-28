@@ -10,7 +10,7 @@ import ServerBuilder from './server/utils/serverBuilder.ts';
 import { initDomainService } from './server/services/domainService.js';
 import { registerDomainUpdateJob, unregisterDomainUpdateJob } from './server/jobs/domainJobs.js';
 
-import { initCountryService } from './server/services/countryService.js';
+import { initCountryService } from './server/services/geoLocationService.js';
 import { registerCountryUpdateJob, unregisterCountryUpdateJob } from './server/jobs/countryJobs.js';
 
 import { CronScheduler } from './server/utils/cronBuilder.js';
@@ -32,8 +32,6 @@ async function bootstrap(): Promise<void> {
     .create(app)
     .https({ key: cert, cert })
     .setConfig({ isProduction, port: 443 })
-    .useSwagger('/api-docs')
-    .useRouter('/api', apiRouter)
     .beforeStart(createViteSSRSetup({
       isProduction,
       baseRoute: '/',
@@ -43,6 +41,8 @@ async function bootstrap(): Promise<void> {
     .addTask(initCountryService)
     .addTask(registerDomainUpdateJob)
     .addTask(registerCountryUpdateJob)
+    .useSwagger('/api-docs')
+    .useRouter('/api', apiRouter)
     .start();
 }
 

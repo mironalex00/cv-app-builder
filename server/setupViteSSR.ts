@@ -6,6 +6,7 @@ import compression from 'compression';
 import sirv from 'sirv';
 import { Application } from 'express';
 import { createServer, type ViteDevServer } from 'vite';
+import { sendError } from './shared/http/response';
 
 declare type SSROptions = {
     isProduction: boolean;
@@ -74,11 +75,10 @@ export default function createViteSSRSetup(options: SSROptions) {
                         vite.ssrFixStacktrace(e);
                     }
                     console.error(e.stack);
-                    res.status(500).end(e.stack);
                 } else {
                     console.error(e);
-                    res.status(500).end('Internal Server Error');
                 }
+                sendError(res, 'Internal Server Error');
             }
         });
     };

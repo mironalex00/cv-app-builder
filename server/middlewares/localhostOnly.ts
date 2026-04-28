@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
-import { sendForbidden } from '../common.js';
+import { sendForbidden } from '../shared/http/response.js';
 
 export default function localhostOnly(req: Request, res: Response, next: NextFunction): void {
     const remoteAddress = req.socket.remoteAddress;

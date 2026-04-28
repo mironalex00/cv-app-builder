@@ -19,11 +19,11 @@ declare type VoidableCallback = () => Promise<void> | void;
 // ============================================================================
 // Interfaces
 // ============================================================================
-export interface IServerBuilderProtocol {
+declare interface IServerBuilderProtocol {
   http(): IServerBuilderConfig;
   https(options: { key: string | Buffer; cert: string | Buffer }): IServerBuilderConfig;
 }
-export interface IServerBuilderConfig {
+declare interface IServerBuilderConfig {
   setConfig(config: { port?: number; base?: string; isProduction?: boolean }): this;
   useMiddleware(path: string, middleware: RequestHandler): this;
   useMiddleware(middleware: RequestHandler): this;

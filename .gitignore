@@ -8,8 +8,7 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
-dist
-dist-ssr
+**/dist*/**
 *.local
 
 # Editor directories and files
@@ -25,9 +24,6 @@ dist-ssr
 
 # Legacy / Old files
 **/*old*
-**/*.old
-**/*.old*
-.old/
 
 # Environment and Secrets
 .env

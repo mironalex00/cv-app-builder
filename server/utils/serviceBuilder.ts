@@ -2,10 +2,12 @@ import { existsSync } from 'node:fs';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import axios, { AxiosError, AxiosRequestConfig } from 'axios';
 
+import type { JsonValue } from '../common.js';
+
 // ============================================================================
 // Types
 // ============================================================================
-export interface DataSourceServiceState<T = string> {
+declare interface DataSourceServiceState<T = string> {
     /** In‑memory cache of parsed items. */
     cache: Set<T>;
     /** Timestamp (ms) of the last successful update, or null if never. */
@@ -13,7 +15,7 @@ export interface DataSourceServiceState<T = string> {
     /** Whether the service has been initialized. */
     initialized: boolean;
 }
-export interface DataSourceServiceConfig<T = string, TRaw = string, TSearch = T> {
+declare interface DataSourceServiceConfig<T = string, TRaw = string, TSearch = T> {
     /** Absolute path to the data directory. */
     dataDir: string;
     /** Filename for the persisted cache (e.g., 'domains.json'). */
@@ -35,7 +37,7 @@ export interface DataSourceServiceConfig<T = string, TRaw = string, TSearch = T>
     /** Overrides default Set.has() resolution for complex caching. */
     has?: (cache: Set<T>, normalizedSearchItem: TSearch) => boolean;
     /** Custom deserializer to reconstruct cached items from disk JSON. */
-    deserialize?: (parsedJson: unknown) => T[] | Promise<T[]>;
+    deserialize?: (parsedJson: JsonValue) => T[] | Promise<T[]>;
 }
 export interface DataSourceService<T = string, TSearch = T> {
     /** Initializes the service (loads cache, creates directory). */
@@ -73,11 +75,10 @@ class DataSourceServiceImpl<T, TRaw, TSearch = T> implements DataSourceService<T
             },
             normalize: config.normalize ?? ((item: T) => item),
             normalizeSearch: config.normalizeSearch ?? ((item: TSearch) => item),
-            has: config.has ?? ((cache, searchItem) => cache.has(searchItem as unknown as T)),
+            has: config.has ?? ((cache, searchItem) => cache.has(searchItem as never as T)),
             deserialize: config.deserialize ?? ((parsedJson) => {
                 if (Array.isArray(parsedJson)) {
-                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                    return parsedJson.filter((_item: T): _item is T => true);
+                    return parsedJson as never as T[];
                 }
                 return [];
             })
@@ -126,8 +127,8 @@ class DataSourceServiceImpl<T, TRaw, TSearch = T> implements DataSourceService<T
 
             console.info(`[DataSource] Updated: ${newCache.size} items loaded from ${this.config.sourceUrl}`);
             return newCache.size;
-        } catch (error) {
-            const message = this.formatError(error);
+        } catch (error: Error | unknown) {
+            const message = this.formatError(error || 'Unknown error');
             console.error(`[DataSource] Update failed: ${message}`);
             throw new Error(`Data source update failed: ${message}`, { cause: error });
         }
@@ -158,7 +159,7 @@ class DataSourceServiceImpl<T, TRaw, TSearch = T> implements DataSourceService<T
             if (!existsSync(this.filePath)) return;
 
             const data = await readFile(this.filePath, 'utf-8');
-            const parsed: unknown = JSON.parse(data);
+            const parsed = JSON.parse(data) as JsonValue;
 
             const items = await this.config.deserialize(parsed);
             if (items.length > 0) {
@@ -187,7 +188,7 @@ class DataSourceServiceImpl<T, TRaw, TSearch = T> implements DataSourceService<T
             );
         }
     }
-    private formatError(error: unknown): string {
+    private formatError(error: Error | string | object | null | undefined): string {
         if (error instanceof AxiosError) {
             return `HTTP ${error.response?.status ?? '??'}: ${error.message}`;
         }
@@ -234,7 +235,7 @@ export default class DataSourceServiceBuilder<T = string, TRaw = string, TSearch
         this.config.has = hasFn;
         return this;
     }
-    withDeserializer(deserialize: (parsedJson: unknown) => T[] | Promise<T[]>): this {
+    withDeserializer(deserialize: (parsedJson: JsonValue) => T[] | Promise<T[]>): this {
         this.config.deserialize = deserialize;
         return this;
     }
